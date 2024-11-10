@@ -138,15 +138,21 @@ btn.switch_to_input(pull=Pull.UP)
 btn_pressed = False
 
 c = 0
-while True:
-    if not btn.value:
-        if not btn_pressed:
-            backlight.value = 1 - backlight.value
-        btn_pressed = True
-    else:
-        btn_pressed = False
-    c += 1
-    if 60 < c:
-        update_graph()
-        c = 0
-    time.sleep(1)
+try:
+    while True:
+        if not btn.value:
+            if not btn_pressed:
+                backlight.value = 1 - backlight.value
+            btn_pressed = True
+        else:
+            btn_pressed = False
+        c += 1
+        if 60 < c:
+            update_graph()
+            c = 0
+        time.sleep(1)
+finally:
+    # clean display, turn off the backlight
+    backlight.value = 0
+    display.fill(0)
+    display.show()
