@@ -7,9 +7,12 @@ Required libralies and font:
 * font5x8.bin
 """
 
-# Choose revision if you are using uHAT Porter Pico
-#import uhat_porter_pico_type_p as board_bcm
-import uhat_porter_pico_type_p3 as board_bcm
+# Choose your environment:
+# rpi: Raspberry Pi SBC
+# uhp: Raspberry Pi Pico with uHAT Porter Pico
+# uhp_r2: Raspberry Pi Pico with uHAT Porter Pico Rev.2
+from config import pcd8544_config
+config = pcd8544_config("rpi")
 
 import board
 from digitalio import DigitalInOut, Direction, Pull
@@ -19,22 +22,25 @@ import json
 from busio import SPI
 import adafruit_pcd8544
 # network
-from akkie_wifi import akkie_wifi
-from akkie_wifi_config import ap_list
-import adafruit_requests
+if config.mode != "rpi":
+    from akkie_wifi import akkie_wifi
+    from akkie_wifi_config import ap_list
+    import adafruit_requests
+else:
+    import requests
 
 # my own libraries and images
-from draw_graph import draw_graph
+from lib.draw_graph import draw_graph
 
 zbx_url   = "http://192.168.x.x/api_jsonrpc.php"
 zbx_token = ""
-zbx_item  = 
+zbx_item  =
 
 # Display setup
-spi = SPI(clock=board_bcm.BCM11, MOSI=board_bcm.BCM10)
-dc = DigitalInOut(board_bcm.BCM25)
-cs = DigitalInOut(board_bcm.BCM8)
-reset = DigitalInOut(board_bcm.BCM24)
+spi = SPI(clock=config.sck, MOSI=config.mosi)
+dc = DigitalInOut(config.dc)
+cs = DigitalInOut(config.cs)
+reset = DigitalInOut(config.rst)
 
 display = adafruit_pcd8544.PCD8544(spi, dc, cs, reset)
 display.bias = 4
@@ -43,7 +49,7 @@ display.fill(0)
 display.show()
 
 # Switch on backlight
-backlight = DigitalInOut(board_bcm.BCM23)
+backlight = DigitalInOut(config.light)
 backlight.direction = Direction.OUTPUT
 backlight.value =1
 
@@ -84,10 +90,12 @@ latest_clock = 0
 def update_graph():
     global latest_clock
     try:
-        wifi.connect()
+        if config.mode != "rpi":
+            wifi.connect()
         data = get_zabbix_item(zbx_url, zbx_token, [zbx_item])
         last_clock = int(data['result'][0]['lastclock'])
-        wifi.disconnect()
+        if config.mode != "rpi":
+            wifi.disconnect()
     except:
         last_clock = 0
     if latest_clock < last_clock:
@@ -98,9 +106,10 @@ def update_graph():
         display.text("%4d" % int(value), 56, 0, 1)
         graph.draw_graph()
 
-wifi = akkie_wifi(ap_list)
-wifi.connect()
-requests = adafruit_requests.Session(wifi.pool, wifi.ssl_context)
+if config.mode != "rpi":
+    wifi = akkie_wifi(ap_list)
+    wifi.connect()
+    requests = adafruit_requests.Session(wifi.pool, wifi.ssl_context)
 
 graph = draw_graph(display, 25,10, 58,38, 1050, 400)
 display.text("Room CO2", 0, 0, 1)
@@ -110,7 +119,8 @@ display.show()
 
 try:
     data = get_zabbix_history(zbx_url, zbx_token, [zbx_item], graph.width)
-    wifi.disconnect()
+    if config.mode != "rpi":
+        wifi.disconnect()
 except:
     pass
 
@@ -123,7 +133,7 @@ latest_clock = int(data['result'][0]['clock'])
 display.text("%4d" % int(last_data['value']), 56, 0, 1)
 display.show()
 
-btn = DigitalInOut(board_bcm.BCM27)
+btn = DigitalInOut(config.buttons[0])
 btn.switch_to_input(pull=Pull.UP)
 btn_pressed = False
 

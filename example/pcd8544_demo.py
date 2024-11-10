@@ -7,11 +7,14 @@ Required libralies and font:
 * font5x8.bin
 """
 
-# Choose revision if you are using uHAT Porter Pico
-# import uhat_porter_pico_type_p as board_bcm
-import uhat_porter_pico_type_p3 as board_bcm
+# Choose your environment:
+# rpi: Raspberry Pi SBC
+# uhp: Raspberry Pi Pico with uHAT Porter Pico
+# uhp_r2: Raspberry Pi Pico with uHAT Porter Pico Rev.2
+from config import pcd8544_config
+config = pcd8544_config("rpi")
 
-import board
+
 from digitalio import DigitalInOut, Direction, Pull
 import time
 # display
@@ -19,8 +22,8 @@ from busio import SPI
 import adafruit_pcd8544
 
 # my own libraries and images
-from draw_img import draw_img
-from draw_graph import draw_graph
+from lib.draw_img import draw_img
+from lib.draw_graph import draw_graph
 from imgs.uiiin import img_uiiin
 from imgs.miku import img_miku
 
@@ -31,7 +34,7 @@ dummy_graph_data = (
 
 # Buttons
 buttons = []
-for b in (board_bcm.BCM27, board_bcm.BCM22, board_bcm.BCM6, board_bcm.BCM5):
+for b in config.buttons:
     buttons.append(DigitalInOut(b))
     buttons[-1].switch_to_input(pull=Pull.UP)
 pressed = [False, False, False, False]
@@ -45,10 +48,10 @@ pressed = [False, False, False, False]
 #reset = DigitalInOut(board.GP7)            # Reset:BCM23
 
 # 令和6年最新版 PCD8544 HAT
-spi = SPI(clock=board_bcm.BCM11, MOSI=board_bcm.BCM10)
-dc = DigitalInOut(board_bcm.BCM25)
-cs = DigitalInOut(board_bcm.BCM8)
-reset = DigitalInOut(board_bcm.BCM24)
+spi = SPI(clock=config.sck, MOSI=config.mosi)
+dc = DigitalInOut(config.dc)
+cs = DigitalInOut(config.cs)
+reset = DigitalInOut(config.rst)
 
 display = adafruit_pcd8544.PCD8544(spi, dc, cs, reset)
 display.bias = 4
@@ -57,9 +60,9 @@ display.fill(0)
 display.show()
 
 # Switch on backlight
-backlight = DigitalInOut(board_bcm.BCM23)
+backlight = DigitalInOut(config.light)
 backlight.direction = Direction.OUTPUT
-backlight.value =1
+backlight.value = 1
 
 def img_with_speed(img, x = 0, y = 0):
     display.fill(0)
@@ -88,13 +91,19 @@ def button_cmd(i):
     elif i == 3:
         img_with_speed(img_miku, 0, 0)
 
-img_with_speed(img_uiiin, 0, 0)
+img_with_speed(img_uiiin, 0, 16)
 
-while True:
-    for i in range(0, 4):
-        if not buttons[i].value:
-            if not pressed[i]:
-                button_cmd(i)
-            pressed[i] = True
-        else:
-            pressed[i] = False
+try:
+    while True:
+        for i in range(0, 4):
+            if not buttons[i].value:
+                if not pressed[i]:
+                    button_cmd(i)
+                pressed[i] = True
+            else:
+                pressed[i] = False
+finally:
+    # clean display, turn off the backlight
+    backlight.value = 0
+    display.fill(0)
+    display.show()
