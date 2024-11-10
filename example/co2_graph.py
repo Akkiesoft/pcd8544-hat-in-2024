@@ -5,6 +5,7 @@ Required libralies and font:
 * adafruit_framebuf
 * adafruit_pcd8544
 * font5x8.bin
+* adafruit_requests or requests
 """
 
 # Choose your environment:

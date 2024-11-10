@@ -102,6 +102,7 @@ try:
                 pressed[i] = True
             else:
                 pressed[i] = False
+        time.sleep(0.01)
 finally:
     # clean display, turn off the backlight
     backlight.value = 0
