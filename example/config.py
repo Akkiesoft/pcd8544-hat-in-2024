@@ -18,6 +18,7 @@ class pcd8544_config:
         self.rst     = board.D24
         self.light   = board.D23
         self.buttons = (board.D27, board.D22, board.D6, board.D5)
+        self.int_pin = board.D4
 
     def __set_gpio_uhp(self):
         self.sck     = board.GP18
@@ -27,6 +28,7 @@ class pcd8544_config:
         self.rst     = board.GP6
         self.light   = board.GP7
         self.buttons = (board.GP9, board.GP8, board.GP12, board.GP11)
+        self.int_pin = board.GP3
 
     def __set_gpio_uhp_r2(self):
         self.sck     = board.GP18
@@ -36,3 +38,4 @@ class pcd8544_config:
         self.rst     = board.GP9
         self.light   = board.GP8
         self.buttons = (board.GP6, board.GP7, board.GP12, board.GP11)
+        self.int_pin = board.GP3
