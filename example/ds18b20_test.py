@@ -22,8 +22,19 @@ import time
 from digitalio import DigitalInOut, Direction, Pull
 from busio import SPI
 import adafruit_pcd8544
-from adafruit_onewire.bus import OneWireBus
-from adafruit_ds18x20 import DS18X20
+
+# DS18B20
+if config.mode != "rpi":
+    from adafruit_onewire.bus import OneWireBus
+    from adafruit_ds18x20 import DS18X20
+    onewire = OneWireBus(config.int_pin)
+    ds18b20 = DS18X20(onewire, onewire.scan()[0])
+else:
+    from w1thermsensor import W1ThermSensor
+    try:
+        ds18b20 = W1ThermSensor()
+    except:
+        ds18b20 = False
 
 # 令和6年最新版 PCD8544 HAT
 spi = SPI(clock=config.sck, MOSI=config.mosi)
@@ -40,17 +51,6 @@ display.show()
 backlight = DigitalInOut(config.light)
 backlight.direction = Direction.OUTPUT
 backlight.value = 1
-
-#ds18b20
-if config.mode != "rpi":
-    onewire = OneWireBus(config.int_pin)
-    ds18b20 = DS18X20(onewire, onewire.scan()[0])
-else:
-    from w1thermsensor import W1ThermSensor
-    try:
-        ds18b20 = W1ThermSensor()
-    except:
-        ds18b20 = False
 
 def get_temp():
     if config.mode != "rpi":
